@@ -1,0 +1,68 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id    Int     @id @default(autoincrement())
+  email String  @unique
+  password  String
+  username String
+  birthday DateTime?
+
+  diaryNotes DiaryNote[]
+
+  progress Progress?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model DiaryNote{
+ id Int @id @default(autoincrement())
+  userId Int
+  user User @relation(fields: [userId], references: [id])
+
+  note String @db.Text
+  analysis AiAnalysis?
+
+    createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+
+}
+
+model AiAnalysis {
+  id        Int     @id @default(autoincrement())
+  diaryNoteId Int @unique
+  diaryNote DiaryNote @relation(fields: [diaryNoteId], references: [id])
+
+  summary     String @db.Text
+  emotions   String
+  horoscope String
+  message String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Progress {
+  id Int @id @default(autoincrement())
+  userId Int @unique
+  user User @relation(fields: [userId], references: [id])
+
+  streakCount Int @default(0)
+  points Int @default(0)
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
