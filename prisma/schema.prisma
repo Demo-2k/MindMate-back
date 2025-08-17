@@ -13,10 +13,30 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+enum EmotionCategory {
+  БАЯРТАЙ // баяр хөөртэй
+  ГУНИГТАЙ // гансарсан
+  СТРЕССТЭЙ // шалгалт, даалгавар, ачаалалтай үед
+  УРАМ_ЗОРИГТОЙ // "charge авсан"
+  ХӨӨРСӨН // догдолсон, сэтгэл хөдөлсөн
+  ТАЙВАН // chill, амгалан
+  САНАА_ЗОВСОН // түгшсэн, айдастай
+  УУРТАЙ // бухимдсан, цухалдсан
+  ГАНЦААРДСАН // ойлгогдохгүй байгаа, ганцаардсан
+  ЭНЕРГИ_ДҮҮРЭН // hyper, хэт их эрч хүчтэй
+  СОНИРХОЛГҮЙ // уйдсан, motivation буусан
+  ИЧСЭН
+}
+enum CalendarType {
+  GOAL
+  DONE
+  REMINDER
+}
+
 model User {
-  id    Int     @id @default(autoincrement())
-  email String  @unique
-  password  String
+  id       Int       @id @default(autoincrement())
+  email    String    @unique
+  password String
   username String
   birthday DateTime?
 
@@ -28,41 +48,45 @@ model User {
   updatedAt DateTime @updatedAt
 }
 
-model DiaryNote{
- id Int @id @default(autoincrement())
+model DiaryNote {
+  id     Int  @id @default(autoincrement())
   userId Int
-  user User @relation(fields: [userId], references: [id])
+  user   User @relation(fields: [userId], references: [id])
 
-  note String @db.Text
+  note     String      @db.Text
   analysis AiAnalysis?
 
-    createdAt DateTime   @default(now())
-  updatedAt DateTime   @updatedAt
-
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model AiAnalysis {
-  id        Int     @id @default(autoincrement())
-  diaryNoteId Int @unique
-  diaryNote DiaryNote @relation(fields: [diaryNoteId], references: [id])
+  id          Int       @id @default(autoincrement())
+  diaryNoteId Int       @unique
+  diaryNote   DiaryNote @relation(fields: [diaryNoteId], references: [id])
 
-  summary     String @db.Text
-  emotions   String
+  summary   String          @db.Text
+  emotions  EmotionCategory[] 
   horoscope String
-  message String
+  message   String
+
+  calendarTasks     String[]   // тухайн өдрийн diary-с гаргасан "хийсэн зүйлс", "зорилтууд"
+  calendarHighlight String     // calendar дээр харагдах хамгийн товч нэг өгүүлбэр
+  calendarDate      DateTime   // diary бичсэн өдөртэй sync-лэгдэнэ
+  calendarType      CalendarType     // "done", "goal", "reminder" гэх мэт төрөл
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
 
 model Progress {
-  id Int @id @default(autoincrement())
-  userId Int @unique
-  user User @relation(fields: [userId], references: [id])
+  id     Int  @id @default(autoincrement())
+  userId Int  @unique
+  user   User @relation(fields: [userId], references: [id])
 
   streakCount Int @default(0)
-  points Int @default(0)
+  points      Int @default(0)
 
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
