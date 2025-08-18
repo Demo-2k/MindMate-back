@@ -101,6 +101,7 @@ export const PostDiary = async (req: Request, res: Response) => {
     });
 
     res.json(createAiAnalysis);
+    
   } catch (err: any) {
     console.error("summarize error:", err);
     return res.status(500).json({ error: "AI output-г parse хийж чадсангүй" });
