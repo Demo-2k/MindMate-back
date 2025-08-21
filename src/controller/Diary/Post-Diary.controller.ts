@@ -29,15 +29,8 @@ export const PostDiary = async (req: Request, res: Response) => {
       "БАЯРТАЙ", // баяр хөөртэй
       "ГУНИГТАЙ", // гансарсан
       "СТРЕССТЭЙ", // шалгалт, даалгавар, ачаалалтай үед
-      "УРАМ_ЗОРИГТОЙ", // "charge авсан"
-      "ХӨӨРСӨН", // догдолсон, сэтгэл хөдөлсөн
       "ТАЙВАН", // chill, амгалан
-      "САНАА_ЗОВСОН", // түгшсэн, айдастай
       "УУРТАЙ", // бухимдсан, цухалдсан
-      "ГАНЦААРДСАН", // ойлгогдохгүй байгаа, ганцаардсан
-      "ЭНЕРГИ_ДҮҮРЭН", // hyper, хэт их эрч хүчтэй
-      "СОНИРХОЛГҮЙ", // уйдсан, motivation буусан
-      "ИЧСЭН",
     ];
 
     const prompt = [
@@ -48,7 +41,12 @@ export const PostDiary = async (req: Request, res: Response) => {
       `2. "emotion": Өдрийн тэмдэглэл дээр үндэслэн сэтгэл хөдлөлийг тодорхойл. Боломжит ангилал: ${EmotionCategory.join(
         ", "
       )}. Хэрэв нэгээс олон emotion илэрвэл JSON array хэлбэрээр гарга.`,
-      `3. "horoscope": Өдрийн сэтгэл санаанд тулгуурласан хувийн зурхай маягийн зөвлөгөө. Өсвөр насны vibe-тэй, 2-3 өгүүлбэрээр, ойлгомжтой, урам зоригтой хэллэгтэй бай.`,
+      `3. "horoscope": Өдрийн сэтгэл санаанд тулгуурласан хувийн зурхай. Гэхдээ зөвхөн **tarot card vibe-тэй** холбож бич. Жишээ:
+   - "The Fool" vibe → шинэ эхлэл, жаахан догдлол, авантюр
+   - "Nine of Swords" vibe → санаа зовсон, стресстэй
+   - "The Sun" vibe → баяр хөөр, эрч хүчтэй
+   2-3 өгүүлбэр, өсвөр насны vibe-тэй, ойлгомжтой, урам зоригтой.`,
+
       `4. "motivational_message": Богино магтаал, тайвшруулах үг. 1-2 өгүүлбэр.`,
       `5. "calendarTasks": Хэрэглэгчийн diary дээр үндэслэн тухайн өдөр хийсэн чухал үйлдлүүдийг жагсааж бич. Жишээ нь: ["Хичээлд суулаа","Дасгал хийсэн","Ном уншсан"].`,
       `6. "calendarHighlight": Тухайн өдрийг товч илэрхийлэх нэг өгүүлбэр. Diary-г бүхэлд нь calendar дээр тавихгүй, харин snapshot маягаар товчхон бич.`,
@@ -96,12 +94,11 @@ export const PostDiary = async (req: Request, res: Response) => {
           : [parsed.calendarTasks],
         calendarHighlight: parsed.calendarHighlight,
         calendarType: parsed.calendarType,
-        calendarDate: new Date(createDiary.createdAt)
+        calendarDate: new Date(createDiary.createdAt),
       },
     });
 
     res.json(createAiAnalysis);
-    
   } catch (err: any) {
     console.error("summarize error:", err);
     return res.status(500).json({ error: "AI output-г parse хийж чадсангүй" });
