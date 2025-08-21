@@ -1,6 +1,7 @@
 import { Response, Request } from "express";
 import bcrypt from "bcrypt";
 import { prisma } from "../../utils/prisma";
+import jwt from "jsonwebtoken";
 
 export const createUser = async (req: Request, res: Response) => {
   const { email, password, username } = req.body;
@@ -25,10 +26,20 @@ export const createUser = async (req: Request, res: Response) => {
         email,
         password: hashedPassword,
         username,
-      },
-    });
 
-    res.status(200).json({ user });
+      },
+      
+    });
+ const token = jwt.sign(
+      { userId: user.id, email: user.email },
+      process.env.JWT_SECRET || "secret", 
+      { expiresIn: "1h" }
+    );
+
+    res.status(200).json({ user, accessToken: token });
+    
+  
+
   } catch (error) {
     res.status(500).json({ message: error });
   }
