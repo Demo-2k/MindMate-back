@@ -79,10 +79,17 @@ export const PostDiary = async (req: Request, res: Response) => {
 
     // чиний одоогийн prompt-оо хэрэглэнэ
 
-    const result = await model.generateContent([
-      { text: prompt },
-      { text: `Тэмдэглэл:\n${diary.note}` },
-    ]);
+    const result = await model.generateContent({
+      contents: [
+        { role: "user", parts: [{ text: prompt }] },
+        { role: "user", parts: [{ text: `Тэмдэглэл:\n${diary.note}` }] },
+      ],
+      generationConfig: {
+        temperature: 0.7,
+        topK: 40,
+        topP: 0.85,
+      },
+    });
 
     let cleanOutput = result.response.text().trim();
     if (cleanOutput.startsWith("```json")) {
@@ -103,23 +110,19 @@ export const PostDiary = async (req: Request, res: Response) => {
         emotions: Array.isArray(parsed.emotion)
           ? parsed.emotion
           : [parsed.emotion],
-          sentiment:parsed.sentiment,
+        sentiment: parsed.sentiment,
 
-          intensity:parsed.intensity,
+        intensity: parsed.intensity,
 
-          topics:Array.isArray(parsed.topics)
-          ? parsed.topics
-          : [parsed.topics],
+        topics: Array.isArray(parsed.topics) ? parsed.topics : [parsed.topics],
 
-          needs:Array.isArray(parsed.needs)
-          ? parsed.needs
-          : [parsed.needs],
-          evidence:Array.isArray(parsed.evidence)
+        needs: Array.isArray(parsed.needs) ? parsed.needs : [parsed.needs],
+        evidence: Array.isArray(parsed.evidence)
           ? parsed.evidence
           : [parsed.evidence],
 
-          moodText: parsed.moodText,
-          moodAction: parsed.moodAction
+        moodText: parsed.moodText,
+        moodAction: parsed.moodAction,
         // horoscope: parsed.horoscope,
         // message: parsed.motivational_message,
         // calendarTasks: Array.isArray(parsed.calendarTasks)
@@ -131,7 +134,69 @@ export const PostDiary = async (req: Request, res: Response) => {
       },
     });
 
-    res.json({ analysis });
+    const Insightprompt = [
+      `Чи бол өсвөр насны хүүхдийн хувийн AI зөвлөгч, дотно найз шиг нь хариулдаг.
+Хэрэглэгчийн өдрийн тэмдэглэл дээр үндэслэн зөвхөн JSON буцаа. Markdown хэрэглэхгүй.
+ 
+{
+  "mood_caption": "Гэрт асуудалтай байсан ч чи хичээлээ хийх гээд оролдож байгаа нь үнэхээр 🔥!",
+  "fun_fact": "TikTok дээр 30 секундийн инээдтэй бичлэг үзэхэд ч стресс буурдаг гээд бод доо 😂📱",
+  "highlight": ["🏠 Гэрийн асуудал", "📚 Хичээл төвлөрөхөд хэцүү", "💭 Аав ээжийгээ санаад гунигтай"],
+  "action": "🎶 Дуртай дуугаа тавиад *study playlist* шиг vibe гаргаад үз!",
+  "achievements": [
+    { "id": "j01", "title": "Diary Drop", "desc": "Өдрийн тэмдэглэлээ share хийлээ ✍️" },
+    { "id": "s01", "title": "Mood Fighter", "desc": "Хэцүү vibe-ийг давсан 💪✨" }
+  ],
+  "tldr": "Drama гэртээ 😬 + focus алга 😵‍💫 = гэхдээ чи still keep going 👏",
+  "moodChallenge": {
+    "title": "Mini Story Challenge",
+    "description": "1 зураг аваад story дээрээ #todaysvibe гэж тавь. Caption нь яг одоо мэдэрч буй emoji-оороо байг 🫶",
+    "shareStyle": "Хэрэв streak хийгээд явбал маргааш өөр vibe story-гоо давтаарай 📸"
+  }
+}
+`,
+    ].join("\n");
+
+    const insight = await model.generateContent({
+      contents: [
+        { role: "user", parts: [{ text: Insightprompt }] },
+        { role: "user", parts: [{ text: `Тэмдэглэл:\n${diary.note}` }] },
+      ],
+      generationConfig: {
+        temperature: 0.95,
+        topK: 60,
+        topP: 0.95,
+      },
+    });
+
+    let InsightCleanOutput = insight.response.text().trim();
+    if (InsightCleanOutput.startsWith("```json")) {
+      InsightCleanOutput = InsightCleanOutput
+        .replace(/^```json\s*/, "")
+        .replace(/\s*```$/, "");
+    }
+
+    console.log("cleanoutpt", InsightCleanOutput);
+
+
+    // res.send("succ");
+    const parsedInsight = JSON.parse(InsightCleanOutput);
+    console.log("parsed insgiht");
+
+    const aiInsightAnalyze = await prisma.aiInsight.create({
+      data:{
+        diaryNoteId: diary.id,
+        mood_caption:parsedInsight.mood_caption,
+        fun_fact:parsedInsight.fun_fact,
+        highlight:parsedInsight.highlight,
+        achievements:parsedInsight.achievements,
+        tldr:parsedInsight.tldr,
+        moodChallenge:parsedInsight.moodChallenge
+      }
+    })
+
+
+    res.json({ aiInsightAnalyze });
   } catch (err: any) {
     console.error("summarize error:", err);
     return res.status(500).json({ error: "AI output-г parse хийж чадсангүй" });

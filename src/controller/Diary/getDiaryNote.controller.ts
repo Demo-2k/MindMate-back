@@ -8,6 +8,7 @@ export const getAllDiaryNotes = async (req: Request, res: Response) => {
       where: userId ? { userId: Number(userId) } : undefined,
       include: {
         analysis: true,
+        aiInsight:true
       },
       orderBy: {
         createdAt: "desc",
