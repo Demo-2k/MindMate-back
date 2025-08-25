@@ -61,13 +61,18 @@ model AiAnalysis {
 
   summary   String          @db.Text
   emotions  EmotionCategory[] 
-  horoscope String
-  message   String
+  positive String?
+  suggestion String?
+  horoscope String?
+  mood_score Int?
+  insight String?
+
+  message   String?
 
   calendarTasks     String[]   // тухайн өдрийн diary-с гаргасан "хийсэн зүйлс", "зорилтууд"
-  calendarHighlight String     // calendar дээр харагдах хамгийн товч нэг өгүүлбэр
-  calendarDate      DateTime   // diary бичсэн өдөртэй sync-лэгдэнэ
-  calendarType      CalendarType     // "done", "goal", "reminder" гэх мэт төрөл
+  calendarHighlight String?     // calendar дээр харагдах хамгийн товч нэг өгүүлбэр
+  calendarDate      DateTime?   // diary бичсэн өдөртэй sync-лэгдэнэ
+  calendarType      CalendarType?     // "done", "goal", "reminder" гэх мэт төрөл
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
