@@ -27,6 +27,12 @@ enum CalendarType {
   REMINDER
 }
 
+enum Sentiment {
+  positive
+  negative
+  neutral
+}
+
 model User {
   id       Int       @id @default(autoincrement())
   email    String    @unique
@@ -59,20 +65,22 @@ model AiAnalysis {
   diaryNoteId Int       @unique
   diaryNote   DiaryNote @relation(fields: [diaryNoteId], references: [id])
 
-  summary   String          @db.Text
+  summary   String?      @db.Text
   emotions  EmotionCategory[] 
-  positive String?
-  suggestion String?
-  horoscope String?
-  mood_score Int?
-  insight String?
 
-  message   String?
+  sentiment Sentiment?
+  intensity Float?
 
-  calendarTasks     String[]   // тухайн өдрийн diary-с гаргасан "хийсэн зүйлс", "зорилтууд"
-  calendarHighlight String?     // calendar дээр харагдах хамгийн товч нэг өгүүлбэр
-  calendarDate      DateTime?   // diary бичсэн өдөртэй sync-лэгдэнэ
-  calendarType      CalendarType?     // "done", "goal", "reminder" гэх мэт төрөл
+  topics    String[] // массив хадгалах
+  needs     String[] // массив хадгалах
+  evidence  String[] // массив хадгалах
+  moodText  Json?
+  moodAction String?
+
+  // calendarTasks     String[]   // тухайн өдрийн diary-с гаргасан "хийсэн зүйлс", "зорилтууд"
+  // calendarHighlight String?     // calendar дээр харагдах хамгийн товч нэг өгүүлбэр
+  // calendarDate      DateTime?   // diary бичсэн өдөртэй sync-лэгдэнэ
+  // calendarType      CalendarType?     // "done", "goal", "reminder" гэх мэт төрөл
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
