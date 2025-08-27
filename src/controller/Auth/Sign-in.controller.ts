@@ -55,7 +55,7 @@ export const googleCallback = async (req: Request, res: Response) => {
   const code = req.query.code as string;
 
   try {
-    // 1️⃣ Google-аас access_token авах
+    //  Google-аас access_token авах
     const { data: tokenRes } = await axios.post(
       "https://oauth2.googleapis.com/token",
       qs.stringify({
@@ -68,13 +68,13 @@ export const googleCallback = async (req: Request, res: Response) => {
       { headers: { "Content-Type": "application/x-www-form-urlencoded" } }
     );
 
-    // 2️⃣ Google user info авах
+    //  Google user info авах
     const { data: googleUser } = await axios.get(
       "https://www.googleapis.com/oauth2/v2/userinfo",
       { headers: { Authorization: `Bearer ${tokenRes.access_token}` } }
     );
 
-    // 3️⃣ DB-д хэрэглэгч хадгалах (байхгүй бол create)
+    //  DB-д хэрэглэгч хадгалах (байхгүй бол create)
     let user = await prisma.user.findUnique({ where: { email: googleUser.email } });
     if (!user) {
   user = await prisma.user.create({
@@ -82,7 +82,7 @@ export const googleCallback = async (req: Request, res: Response) => {
       email: googleUser.email,
       username: googleUser.name,
       avatar: googleUser.picture,
-      password: Math.random().toString(36).slice(-8) // temporary random password
+      password: Math.random().toString(36).slice(-8) 
     },
   });
 }
@@ -94,14 +94,14 @@ export const googleCallback = async (req: Request, res: Response) => {
       });
     }
 
-    // 4️⃣ JWT үүсгэх
+    //  JWT үүсгэх
     const jwtToken = jwt.sign(
       { data: { userId: user.id, email: user.email, username: user.username, avatar: user.avatar } },
       process.env.SECRET || "mock_secret_key",
       { expiresIn: "6h" }
     );
 
-    // 5️⃣ Frontend рүү redirect хийх
+    //  Frontend рүү redirect хийх
     res.redirect(
       `http://localhost:3000/sign-in?token=${jwtToken}&email=${encodeURIComponent(user.email)}&username=${encodeURIComponent(user.username ?? "")}&avatar=${encodeURIComponent(user.avatar ?? "")}`
     );
