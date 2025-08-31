@@ -84,7 +84,7 @@ model AiInsight {
 
   mood_caption   String?
   fun_fact       String?
-    achievements   Json[]   
+    achievements   Json?
 }
 
 model Achievement {
@@ -98,9 +98,6 @@ model Achievement {
 
   @@unique([userId, achId]) // <== upsert ажиллахын тулд
 }
-
-
-
 
 model Progress {
   id     Int  @id @default(autoincrement())

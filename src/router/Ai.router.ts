@@ -4,10 +4,10 @@ import { GetAiAnalyze } from "../controller/ai/getDiariesAiAnalyziesByUser.contr
 import { getDiaryById } from "../controller/Diary/getDiaryAi.controller";
 import { getAllDiaryNotes } from "../controller/Diary/getDiaryNote.controller";
 
-import { updateDiaryById } from "../controller/Diary/updateDiary.controller";
+
 import { deleteDiary } from "../controller/Diary/delete.controller";
 import { TodayDiary } from "../controller/Diary/getTodayDiary.controller";
-import { authenticateToken } from "../middleware/jwt-verify";
+
 
 const AiRouter = express.Router();
 

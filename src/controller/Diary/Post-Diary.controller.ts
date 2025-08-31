@@ -65,7 +65,9 @@ export const PostDiary = async (req: Request, res: Response) => {
     Хэрэглэгчийн тэмдэглэл дээр үндэслэн **зөвхөн JSON форматтай** анализыг гаргаж өг. JSON-ийн бүтэц дараах байдалтай бай:
     {
       "summary": "Өдрийн тэмдэглэлийн гол санааг 2-3 өгүүлбэрээр товчхон бич. Хүүхэд өөрөө бичсэн мэт, энгийн хэллэгтэй бай.",
-      "emotion": "Өдрийн тэмдэглэл дээр үндэслэн сэтгэл хөдлөлийг тодорхойл. Боломжит ангилал: ${EmotionCategory}. Хэрэв нэгээс олон emotion илэрвэл JSON array хэлбэрээр гарга.",
+      "emotion": "Өдрийн тэмдэглэл дээр үндэслэн сэтгэл хөдлөлийг тодорхойл. 
+Зөвхөн дараах ангиллуудаас сонго: БАЯРТАЙ, ГУНИГТАЙ, СТРЕССТЭЙ, ТАЙВАН, УУРТАЙ. 
+Өөр ангилал гаргахыг хатуу хоригло.",
       "moodAction": "Өнөөдрийн сэтгэл хөдлөлд тохирсон **богино, шууд зөвлөгөө** бич. Жишээ: '10 минут алхаж тархиа сэргээгээрэй 🚶‍♀️', 'Амьсгалын дасгал хийгээд завсарлаарай 🌿'"
     }
     Гаргалтыг зөвхөн JSON хэлбэрээр буцаа. Markdown code block хэрэглэхгүй.
@@ -102,21 +104,36 @@ export const PostDiary = async (req: Request, res: Response) => {
 
     const parsed = JSON.parse(cleanOutput);
 
-    const emotionsArray = Array.isArray(parsed.emotion)
-      ? parsed.emotion
-      : [parsed.emotion];
+    const allowedEmotions = [
+      "БАЯРТАЙ",
+      "ГУНИГТАЙ",
+      "СТРЕССТЭЙ",
+      "ТАЙВАН",
+      "УУРТАЙ",
+    ];
+
+    function normalizeEmotion(emotion: string) {
+      if (allowedEmotions.includes(emotion)) return emotion;
+      // closest match олох (жишээ нь ГАЙХАЛТАЙ → БАЯРТАЙ)
+      if (emotion === "ГАЙХАЛТАЙ") return "БАЯРТАЙ";
+      return "ТАЙВАН"; // fallback
+    }
+
+    const parsedEmotions = Array.isArray(parsed.emotion)
+      ? parsed.emotion.map(normalizeEmotion)
+      : [normalizeEmotion(parsed.emotion)];
 
     const analysis = await prisma.aiAnalysis.upsert({
       where: { diaryNoteId: diary.id },
       update: {
         summary: parsed.summary,
-        emotions: emotionsArray,
+        emotions: parsedEmotions,
         moodAction: parsed.moodAction,
       },
       create: {
         diaryNoteId: diary.id,
         summary: parsed.summary,
-        emotions: emotionsArray,
+        emotions: parsedEmotions,
         moodAction: parsed.moodAction,
       },
     });
@@ -163,29 +180,38 @@ export const PostDiary = async (req: Request, res: Response) => {
 
     // res.send("succ");
     const parsedInsight = JSON.parse(InsightCleanOutput);
-    console.log("parsed insgiht");
+    
+    const achievementsArray = Array.isArray(parsedInsight.achievements)
+      ? parsedInsight.achievements
+      : JSON.parse(parsedInsight.achievements || "[]");
 
     const aiInsightAnalyze = await prisma.aiInsight.upsert({
       where: { diaryNoteId: diary.id },
       update: {
         mood_caption: parsedInsight.mood_caption,
         fun_fact: parsedInsight.fun_fact,
-        achievements: parsedInsight.achievements,
+        achievements: achievementsArray,
       },
       create: {
         diaryNoteId: diary.id,
         mood_caption: parsedInsight.mood_caption,
         fun_fact: parsedInsight.fun_fact,
-
-        achievements: parsedInsight.achievements,
+        achievements: achievementsArray,
       },
     });
 
+    // if (
+    //   aiInsightAnalyze.achievements &&
+    //   aiInsightAnalyze.achievements.length > 0
+    // ) {
+    //   await saveAchievements(Number(userId), aiInsightAnalyze.achievements);
+    // }
     if (
       aiInsightAnalyze.achievements &&
+      Array.isArray(aiInsightAnalyze.achievements) &&
       aiInsightAnalyze.achievements.length > 0
     ) {
-      await saveAchievements(Number(userId),aiInsightAnalyze.achievements);
+      await saveAchievements(Number(userId), aiInsightAnalyze.achievements);
     }
 
     res.json({ aiInsightAnalyze });
