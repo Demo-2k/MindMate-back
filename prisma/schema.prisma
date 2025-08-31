@@ -27,12 +27,6 @@ enum CalendarType {
   REMINDER
 }
 
-enum Sentiment {
-  positive
-  negative
-  neutral
-}
-
 model User {
   id       Int       @id @default(autoincrement())
   email    String    @unique
@@ -42,7 +36,7 @@ model User {
  
    avatar   String?
   diaryNotes DiaryNote[]
-
+achievements Achievement[]
   progress Progress?
 
   createdAt DateTime @default(now())
@@ -71,13 +65,7 @@ model AiAnalysis {
   summary   String?      @db.Text
   emotions  EmotionCategory[] 
 
-  sentiment Sentiment?
-  intensity Float?
-
   topics    String[] // массив хадгалах
-  needs     String[] // массив хадгалах
-  evidence  String[] // массив хадгалах
-  moodText  Json?
   moodAction String?
 
   // calendarTasks     String[]   // тухайн өдрийн diary-с гаргасан "хийсэн зүйлс", "зорилтууд"
@@ -96,11 +84,22 @@ model AiInsight {
 
   mood_caption   String?
   fun_fact       String?
-  highlight      String[]
-  achievements   Json[]   
-  tldr           String?
-  moodChallenge  Json?     
+    achievements   Json[]   
 }
+
+model Achievement {
+  id      Int    @id @default(autoincrement())
+  achId   String
+  title   String
+  desc    String
+  userId  Int
+  user    User   @relation(fields: [userId], references: [id])
+  createdAt DateTime @default(now())
+
+  @@unique([userId, achId]) // <== upsert ажиллахын тулд
+}
+
+
 
 
 model Progress {

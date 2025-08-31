@@ -2,6 +2,7 @@ import { GoogleGenerativeAI } from "@google/generative-ai";
 import { Response, Request } from "express";
 import "dotenv/config";
 import { prisma } from "../../utils/prisma";
+import { saveAchievements } from "../progress/newAchiements.controller";
 
 export const PostDiary = async (req: Request, res: Response) => {
   const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
@@ -9,24 +10,44 @@ export const PostDiary = async (req: Request, res: Response) => {
   const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
 
   try {
-    const { text, targetLang = "mn" } = req.body || {};
+    const { text } = req.body || {};
     const { userId } = req.params;
+
+    const startOfDay = new Date();
+    startOfDay.setHours(0, 0, 0, 0);
+
+    const endOfDay = new Date();
+    endOfDay.setHours(23, 59, 59, 999);
 
     if (!text || typeof text !== "string") {
       return res.status(400).json({ error: "text талбар шаардлагатай" });
     }
 
-    const createDiary = await prisma.diaryNote.create({
-      data: {
+    let isDiary = await prisma.diaryNote.findFirst({
+      where: {
         userId: Number(userId),
-        note: text,
+        createdAt: {
+          gte: startOfDay,
+          lte: endOfDay,
+        },
       },
     });
 
-    console.log("createDiary", createDiary);
+    if (isDiary) {
+      // Өдрийн тэмдэглэл байгаа бол update хийх
+      isDiary = await prisma.diaryNote.update({
+        where: { id: isDiary.id },
+        data: { note: isDiary.note + "\n\n" + text, updatedAt: new Date() },
+      });
+    } else {
+      // Байхгүй бол шинээр үүсгэх
+      isDiary = await prisma.diaryNote.create({
+        data: { userId: Number(userId), note: text },
+      });
+    }
 
     const diary = await prisma.diaryNote.findUnique({
-      where: { id: Number(createDiary?.id) },
+      where: { id: Number(isDiary?.id) },
     });
 
     const EmotionCategory = [
@@ -39,45 +60,24 @@ export const PostDiary = async (req: Request, res: Response) => {
     if (!diary) return res.status(404).json({ error: "Diary олдсонгүй" });
 
     const prompt = [
-      `Чи бол өсвөр насны хүүхдийн хувийн AI зөвлөгч. Хэрэглэгч өдөр тутмын diary бичсэн. 
+      `Чи бол өсвөр насны хүүхдийн хувийн AI зөвлөгч. Хэрэглэгч өдөр тутмын diary бичсэн.
 
-Хэрэглэгчийн тэмдэглэл дээр үндэслэн **зөвхөн JSON форматтай** анализыг гаргаж өг. JSON-ийн бүтэц дараах байдалтай бай:
-{
-  "summary": "Өдрийн тэмдэглэлийн гол санааг 2-3 өгүүлбэрээр товчхон бич. Хүүхэд өөрөө бичсэн мэт, энгийн хэллэгтэй бай.",
-  "emotion": "Өдрийн тэмдэглэл дээр үндэслэн сэтгэл хөдлөлийг тодорхойл. Боломжит ангилал: БАЯРТАЙ, ГУНИГТАЙ, СТРЕССТЭЙ, ТАЙВАН, УУРТАЙ. Хэрэв нэгээс олон emotion илэрвэл JSON array хэлбэрээр гарга.",
-  "sentiment": "Өдрийн нийт сэтгэл хөдлөлийг тодорхойл. Боломжит утгууд: positive, neutral, negative.",
-  "intensity": "0..1 хооронд утга өг, сэтгэл хөдлөлийн хүчийг илэрхийлнэ.",
-  "topics": ["Diary дээр дурдагдсан гол сэдвүүд. Боломжит ангилал: study, work, health, family, social, self-growth."],
-  "needs": ["Хэрэглэгчийн хүсэл шаардлага, зөвлөгөө шаардсан зүйлс. Боломжит ангилал: encouragement, plan, rest, celebrate, focus."],
-  "evidence": ["Diary текстээс авсан тод жишээ. Хамгийн тодорхой 2-5 snippet."],
-  "moodText": {
-    "emoji": "Тухайн emotion-т тохирох эможи",
-    "text": "Энгийн, хөөрхөн хэллэгтэй нэг өгүүлбэрийн урамшуулал. Жишээ: '😊 Өнөөдөр чи их баяртай байна!'"
-  },
-  "moodAction": "Өнөөдрийн сэтгэл хөдлөлд тохирсон жижиг алхам эсвэл зөвлөгөө. Жишээ: 'Найздаа баяртайгаа хуваалцаарай 👯', '10 минут алхаж тархиа сэргээгээрэй 🚶‍♀️', 'Амьсгалын дасгал хийгээд завсарлаарай 🌿'."
-}
+    Хэрэглэгчийн тэмдэглэл дээр үндэслэн **зөвхөн JSON форматтай** анализыг гаргаж өг. JSON-ийн бүтэц дараах байдалтай бай:
+    {
+      "summary": "Өдрийн тэмдэглэлийн гол санааг 2-3 өгүүлбэрээр товчхон бич. Хүүхэд өөрөө бичсэн мэт, энгийн хэллэгтэй бай.",
+      "emotion": "Өдрийн тэмдэглэл дээр үндэслэн сэтгэл хөдлөлийг тодорхойл. Боломжит ангилал: ${EmotionCategory}. Хэрэв нэгээс олон emotion илэрвэл JSON array хэлбэрээр гарга.",
+      "moodAction": "Өнөөдрийн сэтгэл хөдлөлд тохирсон **богино, шууд зөвлөгөө** бич. Жишээ: '10 минут алхаж тархиа сэргээгээрэй 🚶‍♀️', 'Амьсгалын дасгал хийгээд завсарлаарай 🌿'"
+    }
+    Гаргалтыг зөвхөн JSON хэлбэрээр буцаа. Markdown code block хэрэглэхгүй.
 
-Гаргалтыг зөвхөн JSON хэлбэрээр буцаа. Markdown code block хэрэглэхгүй.
-
-Жишээ гаргалт:
-{
-  "summary":"Өнөөдөр даалгавраа дуусгаж чадаагүйгээс болж урам хугарсан, бага зэрэг ядарсан байдалтай байна.",
-  "emotion":["ГУНИГТАЙ","СТРЕССТЭЙ"],
-  "sentiment":"negative",
-  "intensity":0.75,
-  "topics":["study","self-growth"],
-  "needs":["encouragement","rest","plan"],
-  "evidence":["дуусгаж чадалгүй","урам хугарлаа","ядаж байна"],
-  "moodText": {
-    "emoji": "😢",
-    "text": "Өнөөдөр жаахан гунигтай өнгөрсөн ч чи даваад гарч чадна!"
-  },
-  "moodAction": "Өөртөө дуртай зүйл хийж баярлуул ☕️"
-}
-`,
+    Жишээ гаргалт:
+    {
+      "summary":"Өнөөдөр даалгавраа дуусгаж чадаагүйгээс болж урам хугарсан, бага зэрэг ядарсан байдалтай байна.",
+      "emotion":["ГУНИГТАЙ","СТРЕССТЭЙ"],
+      "moodAction": "Өөртөө дуртай зүйл хийж баярлуул ☕️"
+    }
+    `,
     ].join("\n");
-
-    // чиний одоогийн prompt-оо хэрэглэнэ
 
     const result = await model.generateContent({
       contents: [
@@ -100,61 +100,43 @@ export const PostDiary = async (req: Request, res: Response) => {
 
     console.log("cleanoutpt", cleanOutput);
 
-    // res.send("succ");
     const parsed = JSON.parse(cleanOutput);
 
-    const analysis = await prisma.aiAnalysis.create({
-      data: {
+    const emotionsArray = Array.isArray(parsed.emotion)
+      ? parsed.emotion
+      : [parsed.emotion];
+
+    const analysis = await prisma.aiAnalysis.upsert({
+      where: { diaryNoteId: diary.id },
+      update: {
+        summary: parsed.summary,
+        emotions: emotionsArray,
+        moodAction: parsed.moodAction,
+      },
+      create: {
         diaryNoteId: diary.id,
         summary: parsed.summary,
-        emotions: Array.isArray(parsed.emotion)
-          ? parsed.emotion
-          : [parsed.emotion],
-        sentiment: parsed.sentiment,
-
-        intensity: parsed.intensity,
-
-        topics: Array.isArray(parsed.topics) ? parsed.topics : [parsed.topics],
-
-        needs: Array.isArray(parsed.needs) ? parsed.needs : [parsed.needs],
-        evidence: Array.isArray(parsed.evidence)
-          ? parsed.evidence
-          : [parsed.evidence],
-
-        moodText: parsed.moodText,
+        emotions: emotionsArray,
         moodAction: parsed.moodAction,
-        // horoscope: parsed.horoscope,
-        // message: parsed.motivational_message,
-        // calendarTasks: Array.isArray(parsed.calendarTasks)
-        //   ? parsed.calendarTasks
-        //   : [parsed.calendarTasks],
-        // calendarHighlight: parsed.calendarHighlight,
-        // calendarType: parsed.calendarType,
-        // calendarDate: new Date(diary.createdAt),
       },
     });
 
+    //insight heseg
+
     const Insightprompt = [
       `Чи бол өсвөр насны хүүхдийн хувийн AI зөвлөгч, дотно найз шиг нь хариулдаг.
-Хэрэглэгчийн өдрийн тэмдэглэл дээр үндэслэн зөвхөн JSON буцаа. Markdown хэрэглэхгүй.
- 
-{
-  "mood_caption": "Гэрт асуудалтай байсан ч чи хичээлээ хийх гээд оролдож байгаа нь үнэхээр 🔥!",
-  "fun_fact": "TikTok дээр 30 секундийн инээдтэй бичлэг үзэхэд ч стресс буурдаг гээд бод доо 😂📱",
-  "highlight": ["🏠 Гэрийн асуудал", "📚 Хичээл төвлөрөхөд хэцүү", "💭 Аав ээжийгээ санаад гунигтай"],
-  "action": "🎶 Дуртай дуугаа тавиад *study playlist* шиг vibe гаргаад үз!",
-  "achievements": [
-    { "id": "j01", "title": "Diary Drop", "desc": "Өдрийн тэмдэглэлээ share хийлээ ✍️" },
-    { "id": "s01", "title": "Mood Fighter", "desc": "Хэцүү vibe-ийг давсан 💪✨" }
-  ],
-  "tldr": "Drama гэртээ 😬 + focus алга 😵‍💫 = гэхдээ чи still keep going 👏",
-  "moodChallenge": {
-    "title": "Mini Story Challenge",
-    "description": "1 зураг аваад story дээрээ #todaysvibe гэж тавь. Caption нь яг одоо мэдэрч буй emoji-оороо байг 🫶",
-    "shareStyle": "Хэрэв streak хийгээд явбал маргааш өөр vibe story-гоо давтаарай 📸"
-  }
-}
-`,
+   Хэрэглэгчийн өдрийн тэмдэглэл дээр үндэслэн зөвхөн JSON буцаа. Markdown хэрэглэхгүй.
+   "achievements" хэсэг байж магадгүй, заримдаа хоосон массив [] эсвэл байхгүй байж болно.
+
+    {
+      "mood_caption": "Гэрт асуудалтай байсан ч чи хичээлээ хийх гээд оролдож байгаа нь үнэхээр 🔥!",
+      "fun_fact": "TikTok дээр 30 секундийн инээдтэй бичлэг үзэхэд ч стресс буурдаг гээд бод доо 😂📱",
+      "achievements": [
+        { "id": "j01", "title": "Diary Drop", "desc": "Өдрийн тэмдэглэлээ share хийлээ ✍️" },
+        { "id": "s01", "title": "Mood Fighter", "desc": "Хэцүү vibe-ийг давсан 💪✨" }
+      ],
+    }
+    `,
     ].join("\n");
 
     const insight = await model.generateContent({
@@ -171,30 +153,40 @@ export const PostDiary = async (req: Request, res: Response) => {
 
     let InsightCleanOutput = insight.response.text().trim();
     if (InsightCleanOutput.startsWith("```json")) {
-      InsightCleanOutput = InsightCleanOutput
-        .replace(/^```json\s*/, "")
-        .replace(/\s*```$/, "");
+      InsightCleanOutput = InsightCleanOutput.replace(
+        /^```json\s*/,
+        ""
+      ).replace(/\s*```$/, "");
     }
 
     console.log("cleanoutpt", InsightCleanOutput);
-
 
     // res.send("succ");
     const parsedInsight = JSON.parse(InsightCleanOutput);
     console.log("parsed insgiht");
 
-    const aiInsightAnalyze = await prisma.aiInsight.create({
-      data:{
+    const aiInsightAnalyze = await prisma.aiInsight.upsert({
+      where: { diaryNoteId: diary.id },
+      update: {
+        mood_caption: parsedInsight.mood_caption,
+        fun_fact: parsedInsight.fun_fact,
+        achievements: parsedInsight.achievements,
+      },
+      create: {
         diaryNoteId: diary.id,
-        mood_caption:parsedInsight.mood_caption,
-        fun_fact:parsedInsight.fun_fact,
-        highlight:parsedInsight.highlight,
-        achievements:parsedInsight.achievements,
-        tldr:parsedInsight.tldr,
-        moodChallenge:parsedInsight.moodChallenge
-      }
-    })
+        mood_caption: parsedInsight.mood_caption,
+        fun_fact: parsedInsight.fun_fact,
 
+        achievements: parsedInsight.achievements,
+      },
+    });
+
+    if (
+      aiInsightAnalyze.achievements &&
+      aiInsightAnalyze.achievements.length > 0
+    ) {
+      await saveAchievements(Number(userId),aiInsightAnalyze.achievements);
+    }
 
     res.json({ aiInsightAnalyze });
   } catch (err: any) {
