@@ -33,11 +33,11 @@ model User {
   password String?
   username String
   birthday DateTime?
- 
-   avatar   String?
-  diaryNotes DiaryNote[]
-achievements Achievement[]
-  progress Progress?
+  themeUrl  String? 
+  avatar       String?
+  diaryNotes   DiaryNote[]
+  achievements Achievement[]
+  progress     Progress?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -62,10 +62,10 @@ model AiAnalysis {
   diaryNoteId Int       @unique
   diaryNote   DiaryNote @relation(fields: [diaryNoteId], references: [id])
 
-  summary   String?      @db.Text
-  emotions  EmotionCategory[] 
+  summary  String?           @db.Text
+  emotions EmotionCategory[]
 
-  topics    String[] // массив хадгалах
+  topics     String[] // массив хадгалах
   moodAction String?
 
   // calendarTasks     String[]   // тухайн өдрийн diary-с гаргасан "хийсэн зүйлс", "зорилтууд"
@@ -78,22 +78,22 @@ model AiAnalysis {
 }
 
 model AiInsight {
-  id           Int       @id @default(autoincrement())
-  diaryNoteId  Int       @unique
-  diaryNote    DiaryNote @relation(fields: [diaryNoteId], references: [id])
+  id          Int       @id @default(autoincrement())
+  diaryNoteId Int       @unique
+  diaryNote   DiaryNote @relation(fields: [diaryNoteId], references: [id])
 
-  mood_caption   String?
-  fun_fact       String?
-    achievements   Json?
+  mood_caption String?
+  fun_fact     String?
+  achievements Json?
 }
 
 model Achievement {
-  id      Int    @id @default(autoincrement())
-  achId   String
-  title   String
-  desc    String
-  userId  Int
-  user    User   @relation(fields: [userId], references: [id])
+  id        Int      @id @default(autoincrement())
+  achId     String
+  title     String
+  desc      String
+  userId    Int
+  user      User     @relation(fields: [userId], references: [id])
   createdAt DateTime @default(now())
 
   @@unique([userId, achId]) // <== upsert ажиллахын тулд
