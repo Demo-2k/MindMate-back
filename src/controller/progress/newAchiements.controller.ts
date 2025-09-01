@@ -17,7 +17,7 @@ export async function saveAchievements(userId: number, achievements: any[]) {
     await prisma.progress.upsert({
       where: { userId },
       update: {
-        points: { increment: newAchievementCount * 10 }, // жишээ: нэг achievement = 10 point
+        points: { increment: newAchievementCount * 5 }, // жишээ: нэг achievement = 10 point
         streakCount: { increment: newAchievementCount }, // нэгээр нэмнэ
       },
       create: {
