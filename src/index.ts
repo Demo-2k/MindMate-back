@@ -9,6 +9,7 @@ import StreaksRouter from "./router/streaks.router";
 import UserRouter from "./router/user.router";
 
 const app = express();
+const PORT = process.env.PORT || 4001;
 
 app.use(cors());
 
@@ -21,5 +22,4 @@ app.use("/auth", AuthRouter);
 app.use("/progress", StreaksRouter);
 app.use("/User", UserRouter )
 
-
-app.listen(4001, () => console.log("API running on http://localhost:4001"));
+app.listen(PORT, () => console.log(`API running on port ${PORT}`));

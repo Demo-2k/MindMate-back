@@ -148,10 +148,17 @@ export const PostDiary = async (req: Request, res: Response) => {
     {
       "mood_caption": "Гэрт асуудалтай байсан ч чи хичээлээ хийх гээд оролдож байгаа нь үнэхээр 🔥!",
       "fun_fact": "TikTok дээр 30 секундийн инээдтэй бичлэг үзэхэд ч стресс буурдаг гээд бод доо 😂📱",
-      "achievements": [
-        { "id": "j01", "title": "Diary Drop", "desc": "Өдрийн тэмдэглэлээ share хийлээ ✍️" },
-        { "id": "s01", "title": "Mood Fighter", "desc": "Хэцүү vibe-ийг давсан 💪✨" }
-      ],
+     "achievements": [
+      {
+        "id": "unique_id",
+        "title": "Achievement title",
+        "desc": "Achievement-ийн тайлбар"
+      }
+    ]
+  }
+
+  achievements хэсэг нь заавал 1 эсвэл түүнээс олон item-тэй байх ёстой.
+  Хэрэглэгч ямар нэгэн зүйл хийсэн, бодсон, эсвэл тэмдэглэлдээ бичсэн үйлдэл болгон achievement үүсгэ.
     }
     `,
     ].join("\n");
@@ -180,7 +187,7 @@ export const PostDiary = async (req: Request, res: Response) => {
 
     // res.send("succ");
     const parsedInsight = JSON.parse(InsightCleanOutput);
-    
+
     const achievementsArray = Array.isArray(parsedInsight.achievements)
       ? parsedInsight.achievements
       : JSON.parse(parsedInsight.achievements || "[]");
