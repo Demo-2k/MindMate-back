@@ -3,9 +3,12 @@ import { prisma } from "../../utils/prisma";
 
 export const getStreaksByUserId = async (req: Request, res: Response) => {
   const { userId } = req.params;
+
+  console.log("user id streaks all:", userId);
+
   try {
     const achievements = await prisma.progress.findMany({
-      where: userId ? { userId: Number(userId) } : undefined,
+      where: { userId: Number(userId) },
       orderBy: {
         createdAt: "desc",
       },
@@ -19,6 +22,8 @@ export const getStreaksByUserId = async (req: Request, res: Response) => {
       },
       { points: 0, streaks: 0 }
     );
+
+    console.log("summaryyy", summary);
 
     res.status(200).json({ summary });
     // res.status(200).json(achievements);
