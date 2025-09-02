@@ -10,7 +10,7 @@ export const getTodayStreaks = async (req: Request, res: Response) => {
     const todayStart = startOfDay(new Date());
     const todayEnd = endOfDay(new Date());
 
-    const todayEntry = await prisma.progress.findMany({
+    const todayEntry = await prisma.progress.findUnique({
       where: {
         userId: Number(userId),
         createdAt: {

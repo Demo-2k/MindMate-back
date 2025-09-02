@@ -2,7 +2,6 @@ import { GoogleGenerativeAI } from "@google/generative-ai";
 import { Response, Request } from "express";
 import "dotenv/config";
 import { prisma } from "../../utils/prisma";
-import { saveAchievements } from "../progress/newAchiements.controller";
 
 export const PostDiary = async (req: Request, res: Response) => {
   const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
@@ -207,16 +206,16 @@ JSON формат:
     // ) {
     //   await saveAchievements(Number(userId), aiInsightAnalyze.achievements);
     // }
-    if (
-      aiInsightAnalyze.achievements &&
-      Array.isArray(aiInsightAnalyze.achievements) &&
-      aiInsightAnalyze.achievements.length > 0
-    ) {
-      await saveAchievements(Number(userId), aiInsightAnalyze.achievements);
-    }
+    // if (
+    //   aiInsightAnalyze.achievements &&
+    //   Array.isArray(aiInsightAnalyze.achievements) &&
+    //   aiInsightAnalyze.achievements.length > 0
+    // ) {
+    //   await saveAchievements(Number(userId), aiInsightAnalyze.achievements);
+    // }
 
     res.json({ aiInsightAnalyze });
-  } catch (err: any) {
+  } catch (err) {
     console.error("summarize error:", err);
     return res.status(500).json({ error: "AI output-г parse хийж чадсангүй" });
   }

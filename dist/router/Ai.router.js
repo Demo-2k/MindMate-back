@@ -1,0 +1,21 @@
+"use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+const express_1 = __importDefault(require("express"));
+const Post_Diary_controller_1 = require("../controller/Diary/Post-Diary.controller");
+const getDiariesAiAnalyziesByUser_controller_1 = require("../controller/ai/getDiariesAiAnalyziesByUser.controller");
+const getDiaryAi_controller_1 = require("../controller/Diary/getDiaryAi.controller");
+const getDiaryNote_controller_1 = require("../controller/Diary/getDiaryNote.controller");
+const delete_controller_1 = require("../controller/Diary/delete.controller");
+const getTodayDiary_controller_1 = require("../controller/Diary/getTodayDiary.controller");
+const AiRouter = express_1.default.Router();
+AiRouter.post("/postDiary/:userId", Post_Diary_controller_1.PostDiary);
+AiRouter.delete("/deleteDiary/:diaryId", delete_controller_1.deleteDiary);
+// AiRouter.post("/aiAnalyzeCreate/:diaryId", CreateAnalyzeDiary);
+AiRouter.get("/getAiAnalyze/:userId", getDiariesAiAnalyziesByUser_controller_1.GetAiAnalyze);
+AiRouter.get("/getDiaryById/:diaryId", getDiaryAi_controller_1.getDiaryById);
+AiRouter.get("/getAllDiaryNotes/:userId", getDiaryNote_controller_1.getAllDiaryNotes);
+AiRouter.get("/getTodayDiary/:userId", getTodayDiary_controller_1.TodayDiary);
+exports.default = AiRouter;

@@ -6,6 +6,7 @@
 
 generator client {
   provider = "prisma-client-js"
+  binaryTargets = ["native", "debian-openssl-1.1.x"]
 }
 
 datasource db {
@@ -38,6 +39,9 @@ model User {
   diaryNotes   DiaryNote[]
   achievements Achievement[]
   progress     Progress?
+
+  totalStreaks Int?
+  totalPoints Int?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

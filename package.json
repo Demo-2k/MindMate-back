@@ -1,13 +1,13 @@
 {
   "name": "udriintemdeglel",
   "version": "1.0.0",
-  "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "nodemon src/index.ts",
     "prisma:generate": "npx prisma generate",
     "prisma:migrate": "npx prisma migrate dev --name init",
-    "build": "tsc"
+    "build": "prisma generate && tsc",
+    "postinstall": "prisma generate"
   },
   "keywords": [],
   "author": "",
@@ -15,6 +15,7 @@
   "description": "",
   "dependencies": {
     "@google/generative-ai": "^0.24.1",
+    "@prisma/client": "^6.15.0",
     "@prisma/extension-accelerate": "^2.0.2",
     "axios": "^1.11.0",
     "bcrypt": "^6.0.0",
@@ -22,7 +23,9 @@
     "date-fns": "^4.1.0",
     "dotenv": "^17.2.1",
     "express": "^5.1.0",
-    "jsonwebtoken": "^9.0.2"
+    "jsonwebtoken": "^9.0.2",
+    "railway": "^2.0.17",
+    "vercel": "^46.1.1"
   },
   "devDependencies": {
     "@types/bcrypt": "^6.0.0",
