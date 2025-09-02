@@ -21,7 +21,6 @@ const TodayProgresses = (req, res) => __awaiter(void 0, void 0, void 0, function
         res.json({ success: true });
     }
     catch (err) {
-        console.error(err);
         res.status(500).json({ error: "Failed to process diary" });
     }
 });

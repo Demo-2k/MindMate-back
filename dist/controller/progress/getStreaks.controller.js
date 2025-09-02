@@ -13,7 +13,6 @@ exports.getStreaksByUserId = void 0;
 const prisma_1 = require("../../utils/prisma");
 const getStreaksByUserId = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { userId } = req.params;
-    console.log("user id streaks all:", userId);
     try {
         const achievements = yield prisma_1.prisma.progress.findMany({
             where: { userId: Number(userId) },
@@ -31,9 +30,7 @@ const getStreaksByUserId = (req, res) => __awaiter(void 0, void 0, void 0, funct
             where: { id: Number(userId) },
             data: { totalPoints: summary.points, totalStreaks: summary.streaks },
         });
-        console.log("updatedTotalStreack", updatedTotalStreack);
         res.status(200).json({ summary });
-        // res.status(200).json(achievements);
     }
     catch (error) {
         return res.status(500).json({ error: "error" });
