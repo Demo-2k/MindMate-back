@@ -4,8 +4,6 @@ import { prisma } from "../../utils/prisma";
 export const getStreaksByUserId = async (req: Request, res: Response) => {
   const { userId } = req.params;
 
-  console.log("user id streaks all:", userId);
-
   try {
     const achievements = await prisma.progress.findMany({
       where: { userId: Number(userId) },
@@ -15,7 +13,10 @@ export const getStreaksByUserId = async (req: Request, res: Response) => {
     });
 
     const summary = achievements.reduce(
-      (acc, ach) => {
+      (
+        acc: { points: any; streaks: any },
+        ach: { points: any; streakCount: any }
+      ) => {
         acc.points += ach.points ?? 0;
         acc.streaks += ach?.streakCount ?? 0;
         return acc;
@@ -23,10 +24,12 @@ export const getStreaksByUserId = async (req: Request, res: Response) => {
       { points: 0, streaks: 0 }
     );
 
-    console.log("summaryyy", summary);
+    const updatedTotalStreack = await prisma.user.update({
+      where: { id: Number(userId) },
+      data: { totalPoints: summary.points, totalStreaks: summary.streaks },
+    });
 
     res.status(200).json({ summary });
-    // res.status(200).json(achievements);
   } catch (error) {
     return res.status(500).json({ error: "error" });
   }

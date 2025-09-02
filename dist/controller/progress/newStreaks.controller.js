@@ -1,0 +1,28 @@
+"use strict";
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.TodayProgresses = void 0;
+const processTodayDiary_controller_1 = require("./processTodayDiary.controller");
+const TodayProgresses = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const userId = Number(req.params.userId);
+        if (isNaN(userId))
+            return res.status(400).json({ error: "Invalid userId" });
+        const data = yield (0, processTodayDiary_controller_1.processTodayDiary)(userId);
+        console.log("data data", data);
+        res.json({ success: true });
+    }
+    catch (err) {
+        console.error(err);
+        res.status(500).json({ error: "Failed to process diary" });
+    }
+});
+exports.TodayProgresses = TodayProgresses;

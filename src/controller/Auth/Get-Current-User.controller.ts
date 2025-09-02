@@ -7,9 +7,8 @@ export const getCurrentUser = async (
   res: Response
 ) => {
   try {
-
     console.log("req: user", req.user);
-    
+
     const headerUser = req.user;
 
     if (!headerUser) {
@@ -25,7 +24,9 @@ export const getCurrentUser = async (
         username: true,
         themeUrl: true,
         avatar: true,
-      }
+        totalPoints: true,
+        totalStreaks: true,
+      },
     });
 
     if (!user) {
@@ -34,6 +35,6 @@ export const getCurrentUser = async (
 
     res.status(200).json({ user });
   } catch (error) {
-    res.status(500).json({ error :"error get current user"});
+    res.status(500).json({ error: "error get current user" });
   }
 };
