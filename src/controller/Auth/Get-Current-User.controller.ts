@@ -7,8 +7,6 @@ export const getCurrentUser = async (
   res: Response
 ) => {
   try {
-    console.log("req: user", req.user);
-
     const headerUser = req.user;
 
     if (!headerUser) {

@@ -13,7 +13,8 @@ export async function processTodayDiary(userId: number) {
     where: { userId, createdAt: { gte: startOfToday } },
     include: { aiInsight: true },
   });
-  if (!todayDiary) return; // diary байхгүй бол юу ч хийхгүй
+
+  if (!todayDiary) return { diary: null, progress: null, achievements: [] }; // diary байхгүй бол юу ч хийхгүй
 
   // 2️⃣ Progress-г шалгаж, streak-г зөвхөн шинээр үүсгэх үед нэмнэ
   //   const progress = await prisma.progress.upsert({
@@ -22,63 +23,81 @@ export async function processTodayDiary(userId: number) {
   //     create: { userId, streakCount: 1, points: 0 },
   //   });
 
-  const progress = await prisma.progress.findUnique({ where: { userId } });
-
+  let progress = await prisma.progress.findUnique({ where: { userId } });
   if (!progress) {
-    // Хэрэв progress байхгүй бол шинээр үүсгэнэ
-    await prisma.progress.create({
-      data: { userId, streakCount: 1, points: 0 },
+    progress = await prisma.progress.create({
+      data: { userId, streakCount: 0, points: 0 },
     });
-  } else {
-    // streak зөвхөн тухайн өдөр анх удаа diary бичсэн үед л нэмнэ
-    const lastDiary = await prisma.diaryNote.findFirst({
-      where: { userId },
-      orderBy: { createdAt: "desc" },
-    });
-
-    const lastDiaryDate = lastDiary?.createdAt
-      ? new Date(lastDiary.createdAt).toDateString()
-      : null;
-
-    const todayDate = new Date().toDateString();
-
-    if (lastDiaryDate !== todayDate) {
-      await prisma.progress.update({
-        where: { userId },
-        data: { streakCount: { increment: 1 } },
-      });
-    }
   }
 
-  console.log("📊 Progress:", progress);
-
-  // 3️⃣ Achievements шалгаж зөвхөн шинэ бол нэмнэ
+  // Өнөөдрийн diary
   type AchievementType = { id: string; title: string; desc: string };
-  const todayAchievements = Array.isArray(todayDiary.aiInsight?.achievements)
-    ? (todayDiary.aiInsight.achievements as AchievementType[])
+
+  const todayAchievementsRaw = todayDiary.aiInsight?.achievements;
+  const todayAchievements: AchievementType[] = Array.isArray(
+    todayAchievementsRaw
+  )
+    ? todayAchievementsRaw.filter(
+        (ach): ach is AchievementType =>
+          ach !== null &&
+          typeof ach === "object" &&
+          "id" in ach &&
+          "title" in ach &&
+          "desc" in ach
+      )
     : [];
 
-  console.log("🏆 Today Achievements:", todayAchievements);
-
-  let newAchievementCount = 0;
+  let newPoints = 0;
   for (const ach of todayAchievements) {
     const exists = await prisma.achievement.findUnique({
       where: { userId_achId: { userId, achId: ach.id } },
     });
+    console.log("exists", exists);
+    
     if (!exists) {
       await prisma.achievement.create({
         data: { userId, achId: ach.id, title: ach.title, desc: ach.desc },
       });
-      newAchievementCount++;
+      newPoints += 5;
     }
   }
 
-  // 4️⃣ Шинэ achievements-аар points нэмэх
-  if (newAchievementCount > 0) {
-    const updated = await prisma.progress.update({
-      where: { userId },
-      data: { points: { increment: newAchievementCount * 5 } },
-    });
-    console.log("⭐ Updated Progress:", updated);
+  // Өдрийн streak
+  const todayDiaryExists = await prisma.diaryNote.findFirst({
+    where: {
+      userId,
+      createdAt: {
+        gte: startOfToday, // өнөөдрийн diary
+        lt: new Date(startOfToday.getTime() + 24 * 60 * 60 * 1000), // зөвхөн өнөөдөр
+      },
+    },
+  });
+
+  console.log("todayDiaryExists",todayDiaryExists );
+  
+
+  let streakIncrement = 0;
+  if (!todayDiaryExists) {
+    streakIncrement = 1; // өнөөдөр анх удаа diary нэмэгдсэн бол streak++
   }
+
+  // Progress update
+  progress = await prisma.progress.update({
+    where: { userId },
+    data: {
+      points: { increment: newPoints },
+      // streakCount: { increment: streakIncrement },
+    },
+  });
+
+  // User update (overwrite)
+  const updatedUser = await prisma.user.update({
+    where: { id: userId },
+    data: {
+      totalPoints: progress.points,
+      // totalStreaks: progress.streakCount,
+    },
+  });
+
+  return { finalProgress: progress, user: updatedUser };
 }
