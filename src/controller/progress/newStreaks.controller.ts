@@ -7,8 +7,6 @@ export const TodayProgresses = async (req: Request, res: Response) => {
     if (isNaN(userId)) return res.status(400).json({ error: "Invalid userId" });
 
     const data = await processTodayDiary(userId);
-
-    console.log("+++++data", data);
     
 
     res.json({ success: data });

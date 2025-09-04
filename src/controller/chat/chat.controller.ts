@@ -33,10 +33,6 @@ const model = genAI.getGenerativeModel({
 export const ChatBot = async (req: Request, res: Response) => {
   try {
     const { userMessage, history = [], diaryData } = req.body;
-
-    console.log("userMessage", userMessage);
-    console.log("diaryyy:", diaryData);
-    
     
 
     if (!userMessage || !diaryData) {
@@ -44,10 +40,6 @@ export const ChatBot = async (req: Request, res: Response) => {
         .status(400)
         .json({ error: "userMessage болон diaryData шаардлагатай" });
     }
-
-    console.log("user", userMessage);
-    console.log("history, ", history);
-    console.log("diary data", diaryData);
     // res.status(200).send("hi")
 
     // Хэрэв түүх хоосон бол тэмдэглэл дээр үндэслэж эхлүүлнэ
@@ -107,7 +99,6 @@ export const ChatBot = async (req: Request, res: Response) => {
 
     return res.json({ text, triggerExercise: false });
   } catch (error) {
-    console.error(error);
     res.status(500).json({ error: "AI-аас хариу авахад алдаа гарлаа" });
   }
 };

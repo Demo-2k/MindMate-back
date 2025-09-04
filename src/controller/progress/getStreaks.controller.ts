@@ -12,8 +12,6 @@ export const getStreaksByUserId = async (req: Request, res: Response) => {
       },
     });
 
-    console.log("achievements", achievements);
-
     const summary = achievements.reduce(
       (
         acc: { points: any; streaks: any },
@@ -25,13 +23,6 @@ export const getStreaksByUserId = async (req: Request, res: Response) => {
       },
       { points: 0, streaks: 0 }
     );
-
-    // const updateUserPoints = await prisma.user.update({
-    //   where: { id: Number(userId) },
-    //   data: { totalPoints: summary.points, totalStreaks: summary.streaks },
-    // });
-
-    // console.log("updateUserPoints", updateUserPoints);
 
     res.status(200).json({ summary });
   } catch (error) {
