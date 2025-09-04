@@ -8,9 +8,10 @@ export const TodayProgresses = async (req: Request, res: Response) => {
 
     const data = await processTodayDiary(userId);
 
-    console.log("data data", data);
+    console.log("+++++data", data);
+    
 
-    res.json({ success: true });
+    res.json({ success: data });
   } catch (err) {
     res.status(500).json({ error: "Failed to process diary" });
   }

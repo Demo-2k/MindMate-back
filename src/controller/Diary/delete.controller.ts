@@ -11,17 +11,26 @@ export const deleteDiary = async (req: Request, res: Response) => {
       where: { id: Number(diaryId) },
     });
 
+    console.log("existingDiary", existingDiary);
+
     if (!existingDiary)
       return res.status(404).json({ error: "Diary not found" });
 
-    const deletedDiary = await prisma.diaryNote.delete({
-      where: { id: Number(diaryId) },
+    await prisma.aiAnalysis.deleteMany({
+      where: { diaryNoteId: Number(diaryId)  },
     });
 
-    console.log("updss", deletedDiary);
+    await prisma.aiInsight.deleteMany({
+      where: { diaryNoteId: Number(diaryId) },
+    });
 
-    res.status(200).json(deletedDiary);
+    await prisma.diaryNote.delete({
+      where: { id: Number(diaryId)  },
+    });
+
+
+    res.status(200).send("sucess");
   } catch (error) {
-    return res.status(500).json({ error: "error" });
+    return res.status(500).json({ error });
   }
 };
