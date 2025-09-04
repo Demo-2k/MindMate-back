@@ -6,7 +6,7 @@ import { prisma } from "../../utils/prisma";
 export const PostDiary = async (req: Request, res: Response) => {
   const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
 
-  const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+  const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
 
   try {
     const { text } = req.body || {};
@@ -92,8 +92,6 @@ export const PostDiary = async (req: Request, res: Response) => {
         .replace(/\s*```$/, "");
     }
 
-    console.log("cleanoutpt", cleanOutput);
-
     const parsed = JSON.parse(cleanOutput);
 
     const allowedEmotions = [
@@ -176,7 +174,6 @@ JSON формат:
       ).replace(/\s*```$/, "");
     }
 
-    console.log("cleanoutpt", InsightCleanOutput);
 
     // res.send("succ");
     const parsedInsight = JSON.parse(InsightCleanOutput);
@@ -199,20 +196,6 @@ JSON формат:
         achievements: achievementsArray,
       },
     });
-
-    // if (
-    //   aiInsightAnalyze.achievements &&
-    //   aiInsightAnalyze.achievements.length > 0
-    // ) {
-    //   await saveAchievements(Number(userId), aiInsightAnalyze.achievements);
-    // }
-    // if (
-    //   aiInsightAnalyze.achievements &&
-    //   Array.isArray(aiInsightAnalyze.achievements) &&
-    //   aiInsightAnalyze.achievements.length > 0
-    // ) {
-    //   await saveAchievements(Number(userId), aiInsightAnalyze.achievements);
-    // }
 
     res.json({ aiInsightAnalyze });
   } catch (err) {

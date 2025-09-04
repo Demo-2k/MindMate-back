@@ -4,14 +4,10 @@ import { prisma } from "../../utils/prisma";
 export const deleteDiary = async (req: Request, res: Response) => {
   const { diaryId } = req.params;
 
-  console.log("text", diaryId);
-
   try {
     const existingDiary = await prisma.diaryNote.findUnique({
       where: { id: Number(diaryId) },
     });
-
-    console.log("existingDiary", existingDiary);
 
     if (!existingDiary)
       return res.status(404).json({ error: "Diary not found" });

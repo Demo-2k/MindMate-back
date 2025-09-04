@@ -16,12 +16,6 @@ export async function processTodayDiary(userId: number) {
 
   if (!todayDiary) return { diary: null, progress: null, achievements: [] }; // diary байхгүй бол юу ч хийхгүй
 
-  // 2️⃣ Progress-г шалгаж, streak-г зөвхөн шинээр үүсгэх үед нэмнэ
-  //   const progress = await prisma.progress.upsert({
-  //     where: { userId },
-  //      update: { streakCount: { increment: 1 } },  // update хийхгүй
-  //     create: { userId, streakCount: 1, points: 0 },
-  //   });
 
   let progress = await prisma.progress.findUnique({ where: { userId } });
   if (!progress) {
@@ -52,7 +46,6 @@ export async function processTodayDiary(userId: number) {
     const exists = await prisma.achievement.findUnique({
       where: { userId_achId: { userId, achId: ach.id } },
     });
-    console.log("exists", exists);
     
     if (!exists) {
       await prisma.achievement.create({
@@ -72,8 +65,6 @@ export async function processTodayDiary(userId: number) {
       },
     },
   });
-
-  console.log("todayDiaryExists",todayDiaryExists );
   
 
   let streakIncrement = 0;
