@@ -2,11 +2,12 @@ import { GoogleGenerativeAI } from "@google/generative-ai";
 import { Response, Request } from "express";
 import "dotenv/config";
 import { prisma } from "../../utils/prisma";
+import { processTodayDiary } from "../progress/processTodayDiary.controller";
 
 export const PostDiary = async (req: Request, res: Response) => {
   const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
 
-  const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
+  const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
 
   try {
     const { text } = req.body || {};
@@ -174,7 +175,6 @@ JSON формат:
       ).replace(/\s*```$/, "");
     }
 
-
     // res.send("succ");
     const parsedInsight = JSON.parse(InsightCleanOutput);
 
@@ -197,7 +197,12 @@ JSON формат:
       },
     });
 
-    res.json({ aiInsightAnalyze });
+    const progressResult = await processTodayDiary(Number(userId));
+
+    console.log("progressResult", progressResult);
+    
+
+    res.json({ aiInsightAnalyze, progress: progressResult });
   } catch (err) {
     console.error("summarize error:", err);
     return res.status(500).json({ error: "AI output-г parse хийж чадсангүй" });
