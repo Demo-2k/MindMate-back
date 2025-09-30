@@ -11,7 +11,11 @@ import UserRouter from "./router/user.router";
 const app = express();
 const PORT = process.env.PORT || 4001;
 
-app.use(cors());
+app.use(cors({
+  origin: ["https://mind-mate-client.vercel.app", "http://localhost:3000"],
+  methods: ["GET","POST","PUT","PATCH","DELETE","OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"],
+}));
 
 app.use(express.json()); // 🔑 req.body-д JSON авах
 
