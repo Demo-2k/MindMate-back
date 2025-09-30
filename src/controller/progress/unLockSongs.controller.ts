@@ -1,27 +1,64 @@
+// import { Response, Request } from "express";
+// import { prisma } from "../../utils/prisma";
+
+// export const UnlockSongs = async (req: Request, res: Response) => {
+//   const { userId } = req.params;
+//   const { songPrice } = req.body;
+//   try {
+//     const user = await prisma.progress.findUnique({
+//       where: { userId: Number(userId) },
+//     });
+    
+
+//     if (!user) return res.status(404).json({ message: "User олдсонгүй" });
+
+//     const currentPoints = user.points ?? 0;
+//     const newPoints = Math.max(currentPoints - songPrice, 0);
+
+//     const updateUserPoints = await prisma.progress.update({
+//       where: { userId: Number(userId) },
+//       data: { points: newPoints },
+//     });
+  
+//     res.status(200).json(updateUserPoints);
+//   } catch (error) {
+//     res.status(500).json({ error });
+//   }
+// };
+
 import { Response, Request } from "express";
 import { prisma } from "../../utils/prisma";
 
 export const UnlockSongs = async (req: Request, res: Response) => {
   const { userId } = req.params;
   const { songPrice } = req.body;
+
   try {
-    const user = await prisma.progress.findUnique({
+    const progress = await prisma.progress.findUnique({
       where: { userId: Number(userId) },
     });
-    
 
-    if (!user) return res.status(404).json({ message: "User олдсонгүй" });
+    if (!progress) return res.status(404).json({ message: "User олдсонгүй" });
 
-    const currentPoints = user.points ?? 0;
-    const newPoints = Math.max(currentPoints - songPrice, 0);
+    if ((progress.points ?? 0) < songPrice) {
+      return res.status(400).json({ message: "Оноо хүрэхгүй байна" });
+    }
 
-    const updateUserPoints = await prisma.progress.update({
+    // 1️⃣ progress онооос хасах
+    const updatedProgress = await prisma.progress.update({
       where: { userId: Number(userId) },
-      data: { points: newPoints },
+      data: { points: { decrement: songPrice } },
     });
-  
-    res.status(200).json(updateUserPoints);
+
+    // 2️⃣ user.totalPoints-г шинэчлэх
+    const updatedUser = await prisma.user.update({
+      where: { id: Number(userId) },
+      data: { totalPoints: updatedProgress.points },
+    });
+
+    return res.status(200).json(updatedUser);
   } catch (error) {
-    res.status(500).json({ error });
+    console.error(error);
+    return res.status(500).json({ error: "Internal server error" });
   }
 };
