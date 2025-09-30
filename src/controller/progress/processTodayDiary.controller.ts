@@ -9,20 +9,30 @@ export async function processTodayDiary(userId: number) {
   });
 
   if (!todayDiary) {
-    return { diary: null, finalProgress: null, user: null, addedAchievements: [], addedPoints: 0 };
+    return {
+      diary: null,
+      finalProgress: null,
+      user: null,
+      addedAchievements: [],
+      addedPoints: 0,
+    };
   }
 
   // 2️⃣ Хэрэглэгчийн progress-ийг шалгах, байхгүй бол шинээр үүсгэх
   let progress = await prisma.progress.findUnique({ where: { userId } });
   if (!progress) {
-    progress = await prisma.progress.create({ data: { userId, streakCount: 0, points: 0 } });
+    progress = await prisma.progress.create({
+      data: { userId, streakCount: 0, points: 0 },
+    });
   }
 
   type AchievementType = { id: string; title: string; desc: string };
 
   const todayAchievementsRaw = todayDiary.aiInsight?.achievements;
-  
-  const todayAchievements: AchievementType[] = Array.isArray(todayAchievementsRaw)
+
+  const todayAchievements: AchievementType[] = Array.isArray(
+    todayAchievementsRaw
+  )
     ? todayAchievementsRaw.filter(
         (ach): ach is AchievementType =>
           ach !== null &&
@@ -67,10 +77,10 @@ export async function processTodayDiary(userId: number) {
 
   // 6️⃣ Return
   return {
-    diary: todayDiary,
-    finalProgress: progress,
-    user: updatedUser,
-    addedAchievements: savedAchievements, // зөвхөн шинэ achievement
-    addedPoints: newPoints,               // зөвхөн шинэ point
+    diary: todayDiary || null,
+    finalProgress: progress || { points: 0, streakCount: 0 },
+    user: updatedUser || null,
+    addedAchievements: savedAchievements || [],
+    addedPoints: newPoints || 0,
   };
 }
