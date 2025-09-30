@@ -52,7 +52,7 @@ model DiaryNote {
   userId Int
   user   User @relation(fields: [userId], references: [id])
 
-  note     String?      @db.Text
+  note     String      @db.Text
   analysis AiAnalysis?
 
   aiInsight AiInsight?
