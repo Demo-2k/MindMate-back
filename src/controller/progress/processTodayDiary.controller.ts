@@ -84,3 +84,4 @@ export async function processTodayDiary(userId: number) {
     addedPoints: newPoints || 0,
   };
 }
+//pushlnee chamaig mamaig
